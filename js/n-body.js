@@ -1,29 +1,17 @@
-var l = [1,2,3,4,5,6]
 
-var nodelist = []
-
-var t = .1;
+// phyical constants
+var t = .3; 
 var m = 1;
-var g = 1;
-var k = 10;
-var mu = .1;
-var blank = {f_x:0, f_y:0, a_x:0, a_y:0, v_x:0, v_y:0, x:0, y:0}
+var g = 100;
+var k = .01;
+var mu = .1; //for implementing friction so remove energy from system
 
-//input x,y forces and old node
-var node = function(fx,fy, n){
-	//are these necesary?
-	this.f_x = fx;
-	this.f_y = fy;
 
-	this.a_x = n.a_x;
-	this.a_y = n.a_y;
-	
-	this.v_x = n.v_x;
-	this.v_y = n.v_y;
+//  example of node
+//  {id:0, friends:[], f_x:0, f_y:0, a_x:0, a_y:0, v_x:0, v_y:0, x:0, y:0}
+//  id is an identification of the specific node
+//  friends is an array contain the id's of mutual friends
 
-	this.x = n.x;
-	this.y = n.y;
-}
 
 //for testing 
 function setup( nodes ){
@@ -77,14 +65,19 @@ function f_calc( nodes ){
 			var n2 = nodes[j];
 			var dx = n2.x - n1.x;
 			var dy = n2.y - n1.y;
-			var rrr = Math.pow((dx*dx + dy*dy), 3/2); //is this too slow?
-			//console.log( rrr );
+			var rrr = Math.max(Math.pow((dx*dx + dy*dy), 3/2), 1/10); //is this too slow?
+			console.log( rrr );
 			//gravity only for now.
-			var F = g * m * m / rrr
-			var fx2 = -dx * F;
-			var fy2 = -dy * F;
-			fx1 += -fx2;
-			fy1 += -fy2;	
+			var Fg = g * m * m / rrr ;
+			
+			//conditional for whether Fs added to Fg is Fs_x = -k*dx?
+			if(true){ var Fs = k } //can we leave it as rrr?
+			else{ var Fs = 0; } 
+			//add friction, static/kinetic			
+			var fx2 = -dx * (-Fg + Fs); //switch sign for antigravity
+			var fy2 = -dy * (-Fg + Fs);
+			fx1 -= fx2;
+			fy1 -= fy2;	
 			
 			nodes[j] = f_add(fx2,fy2, nodes[j]);  //anonymous function?
 			//console.log( "FDSA" + nodes[j].f_x, nodes[j].f_y)
@@ -117,17 +110,14 @@ function clear(){
 	}
 }
 
-function animate(n, l){
+function animate(l){
 		f_calc( l );
 		move( l );
 		draw( l );
 }
 
-function sleep(milliseconds) {
-  var start = new Date().getTime();
-  for (var i = 0; i < 1e7; i++) {
-    if ((new Date().getTime() - start) > milliseconds){
-      break;
-    }
-  }
+function sleep(millis, callback) {
+    setTimeout(function()
+            { callback(); }
+    , millis);
 }
